@@ -8,6 +8,7 @@
 
 class APartyMember;
 class AEnemy;
+class ABattleManager;
 
 /**
  * 캐릭터 스폰 매니저
@@ -40,6 +41,10 @@ public:
 	// 스폰할 적군 클래스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TSubclassOf<AEnemy> OrcClass;
+
+	// BattleManager 참조 (스폰된 캐릭터 등록용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
+	ABattleManager* BattleManager;
 
 	// 스폰 함수
 	UFUNCTION(BlueprintCallable, Category = "Spawn")

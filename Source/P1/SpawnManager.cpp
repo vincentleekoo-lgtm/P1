@@ -3,6 +3,7 @@
 #include "SpawnManager.h"
 #include "PartyMember.h"
 #include "Enemy.h"
+#include "BattleManager.h"
 
 ASpawnManager::ASpawnManager()
 {
@@ -14,14 +15,15 @@ ASpawnManager::ASpawnManager()
 	OrcClass = nullptr;
 	SpawnedWarrior = nullptr;
 	SpawnedOrc = nullptr;
+	BattleManager = nullptr;
 }
 
 void ASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 게임 시작 시 자동으로 캐릭터 스폰
-	SpawnCharacters();
+	// StageManager가 호출할 때까지 대기
+	// SpawnCharacters()는 수동으로 호출됨
 }
 
 void ASpawnManager::SpawnCharacters()
@@ -47,6 +49,12 @@ void ASpawnManager::SpawnCharacters()
 		if (SpawnedWarrior)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Warrior spawned at %s"), *SpawnLocation.ToString());
+			
+			// BattleManager에 등록
+			if (BattleManager)
+			{
+				BattleManager->RegisterPartyMember(SpawnedWarrior);
+			}
 		}
 		else
 		{
@@ -75,6 +83,12 @@ void ASpawnManager::SpawnCharacters()
 		if (SpawnedOrc)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Orc spawned at %s"), *SpawnLocation.ToString());
+			
+			// BattleManager에 등록
+			if (BattleManager)
+			{
+				BattleManager->RegisterEnemy(SpawnedOrc);
+			}
 		}
 		else
 		{
