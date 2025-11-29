@@ -3,14 +3,12 @@
 #include "BattleManager.h"
 #include "PartyMember.h"
 #include "Enemy.h"
-#include "StageManager.h"
 
 ABattleManager::ABattleManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	CurrentBattleState = EBattleState::NotStarted;
-	StageManager = nullptr;
 }
 
 void ABattleManager::BeginPlay()
@@ -57,19 +55,9 @@ void ABattleManager::EndBattle(bool bVictory)
 
 	ChangeBattleState(bVictory ? EBattleState::Victory : EBattleState::Defeat);
 	OnBattleEnded.Broadcast(bVictory);
-
-	// StageManager에게 결과 알림
-	if (StageManager)
-	{
-		if (bVictory)
-		{
-			StageManager->CompleteStage();
-		}
-		else
-		{
-			StageManager->FailStage();
-		}
-	}
+	
+	// Delegate로 결과 알림 (StageManager가 구독)
+	OnBattleCompleted.Broadcast(bVictory);
 }
 
 void ABattleManager::PauseBattle()

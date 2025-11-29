@@ -2,6 +2,7 @@
 
 #include "StageManager.h"
 #include "SpawnManager.h"
+#include "BattleManager.h"
 #include "GameManager.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -24,6 +25,13 @@ void AStageManager::BeginPlay()
 	Super::BeginPlay();
 	
 	UE_LOG(LogTemp, Log, TEXT("StageManager Created - Stage: %s"), *StageName);
+	
+	// BattleManager 이벤트 구독
+	if (BattleManager)
+	{
+		BattleManager->OnBattleCompleted.AddDynamic(this, &AStageManager::HandleBattleCompleted);
+		UE_LOG(LogTemp, Log, TEXT("Subscribed to BattleManager events"));
+	}
 }
 
 void AStageManager::Tick(float DeltaTime)
@@ -113,5 +121,19 @@ void AStageManager::FailStage()
 		{
 			GameManager->EndBattle(false);
 		}
+	}
+}
+
+void AStageManager::HandleBattleCompleted(bool bVictory)
+{
+	UE_LOG(LogTemp, Log, TEXT("HandleBattleCompleted called - Victory: %s"), bVictory ? TEXT("True") : TEXT("False"));
+	
+	if (bVictory)
+	{
+		CompleteStage();
+	}
+	else
+	{
+		FailStage();
 	}
 }

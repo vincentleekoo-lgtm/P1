@@ -79,6 +79,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Wave")
 	void StartNextWave();
 
+	// BattleManager 이벤트 핸들러
+	UFUNCTION()
+	void HandleBattleCompleted(bool bVictory);
+
 private:
 	void ChangeStageState(EStageState NewState);
 };

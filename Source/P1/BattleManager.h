@@ -8,7 +8,6 @@
 
 class APartyMember;
 class AEnemy;
-class AStageManager;
 
 UENUM(BlueprintType)
 enum class EBattleState : uint8
@@ -25,6 +24,7 @@ enum class EBattleState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBattleStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBattleEnded, bool, bVictory);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDefeated, AActor*, DefeatedCharacter);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBattleCompleted, bool, bVictory);
 
 /**
  * 전투 관리자
@@ -61,16 +61,16 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Battle Events")
 	FOnCharacterDefeated OnCharacterDefeated;
 
+	// 전투 완료 이벤트 (StageManager에게 알림용)
+	UPROPERTY(BlueprintAssignable, Category = "Battle Events")
+	FOnBattleCompleted OnBattleCompleted;
+
 	// 전투 참가자 리스트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle")
 	TArray<APartyMember*> PartyMembers;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle")
 	TArray<AEnemy*> Enemies;
-
-	// StageManager 참조
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
-	AStageManager* StageManager;
 
 	// 전투 시작
 	UFUNCTION(BlueprintCallable, Category = "Battle")
