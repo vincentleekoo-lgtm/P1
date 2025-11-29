@@ -100,6 +100,16 @@ void AStageManager::StartNextWave()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpawnManager is not set!"));
 	}
+
+	// BattleManager를 통해 전투 시작
+	if (BattleManager)
+	{
+		BattleManager->StartBattle();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BattleManager is not set!"));
+	}
 }
 
 void AStageManager::CompleteStage()
