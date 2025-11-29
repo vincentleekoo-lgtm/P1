@@ -87,6 +87,23 @@ void ABattleManager::EndBattle(bool bVictory)
 {
 	UE_LOG(LogTemp, Log, TEXT("Battle Ended - Victory: %s"), bVictory ? TEXT("True") : TEXT("False"));
 
+	// 모든 캐릭터의 공격 중지
+	for (APartyMember* Member : PartyMembers)
+	{
+		if (Member)
+		{
+			Member->StopAttacking();
+		}
+	}
+
+	for (AEnemy* Enemy : Enemies)
+	{
+		if (Enemy)
+		{
+			Enemy->StopAttacking();
+		}
+	}
+
 	ChangeBattleState(bVictory ? EBattleState::Victory : EBattleState::Defeat);
 	OnBattleEnded.Broadcast(bVictory);
 	
