@@ -23,8 +23,10 @@ void AP1GameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 게임 시작 시 자동으로 캐릭터 스폰
-	SpawnCharacters();
+	UE_LOG(LogTemp, Log, TEXT("P1GameMode started - using SpawnManager for character spawning"));
+	
+	// SpawnManager가 캐릭터 스폰 담당
+	// 자동 스폰 비활성화
 }
 
 void AP1GameMode::SpawnCharacters()
