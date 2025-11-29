@@ -16,6 +16,7 @@ ASpawnManager::ASpawnManager()
 	SpawnedWarrior = nullptr;
 	SpawnedOrc = nullptr;
 	BattleManager = nullptr;
+	bIsInitialized = false;
 }
 
 void ASpawnManager::BeginPlay()
@@ -24,12 +25,24 @@ void ASpawnManager::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("===== SpawnManager Created - Name: %s ====="), *GetName());
 
-	// 설정 검증 - 하나라도 없으면 잘못 배치된 액터
+	// Initialize()가 호출될 때까지 대기
+	// StageManager가 명시적으로 Initialize() 호출
+}
+
+void ASpawnManager::Initialize()
+{
+	if (bIsInitialized)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpawnManager already initialized"));
+		return;
+	}
+
+	// 설정 검증
 	bool bHasConfiguration = WarriorClass && PartySpawnPoint && OrcClass && EnemySpawnPoint && BattleManager;
 	
 	if (!bHasConfiguration)
 	{
-		UE_LOG(LogTemp, Error, TEXT("SpawnManager '%s' has missing configuration! This actor should be removed from the level."), *GetName());
+		UE_LOG(LogTemp, Error, TEXT("SpawnManager '%s' has missing configuration!"), *GetName());
 		
 		if (!WarriorClass)
 			UE_LOG(LogTemp, Warning, TEXT("  - WarriorClass is not set!"));
@@ -41,10 +54,11 @@ void ASpawnManager::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("  - EnemySpawnPoint is not set!"));
 		if (!BattleManager)
 			UE_LOG(LogTemp, Warning, TEXT("  - BattleManager is not set!"));
+		return;
 	}
 
-	// StageManager가 호출할 때까지 대기
-	// SpawnCharacters()는 수동으로 호출됨
+	bIsInitialized = true;
+	UE_LOG(LogTemp, Log, TEXT("SpawnManager Initialized"));
 }
 
 void ASpawnManager::SpawnCharacters()

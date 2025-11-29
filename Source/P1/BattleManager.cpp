@@ -9,6 +9,7 @@ ABattleManager::ABattleManager()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CurrentBattleState = EBattleState::NotStarted;
+	bIsInitialized = false;
 }
 
 void ABattleManager::BeginPlay()
@@ -16,6 +17,18 @@ void ABattleManager::BeginPlay()
 	Super::BeginPlay();
 	
 	UE_LOG(LogTemp, Warning, TEXT("===== BattleManager Created - Name: %s ====="), *GetName());
+}
+
+void ABattleManager::Initialize()
+{
+	if (bIsInitialized)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BattleManager already initialized"));
+		return;
+	}
+
+	bIsInitialized = true;
+	UE_LOG(LogTemp, Log, TEXT("BattleManager Initialized"));
 }
 
 void ABattleManager::Tick(float DeltaTime)

@@ -46,9 +46,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
 	ABattleManager* BattleManager;
 
+	// 초기화 (BeginPlay 순서 문제 해결용)
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	void Initialize();
+
 	// 스폰 함수
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void SpawnCharacters();
+
+private:
+	bool bIsInitialized;
 
 private:
 	APartyMember* SpawnedWarrior;

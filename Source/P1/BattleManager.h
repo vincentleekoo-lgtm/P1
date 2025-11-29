@@ -47,9 +47,16 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+	// 초기화 (BeginPlay 순서 문제 해결용)
+	UFUNCTION(BlueprintCallable, Category = "Battle")
+	void Initialize();
+
 	// 전투 상태
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle")
 	EBattleState CurrentBattleState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle")
+	bool bIsInitialized;
 
 	// 전투 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Battle Events")

@@ -33,11 +33,23 @@ void AStageManager::BeginPlay()
 	if (!BattleManager)
 		UE_LOG(LogTemp, Error, TEXT("StageManager '%s': BattleManager is not set!"), *GetName());
 	
-	// BattleManager 이벤트 구독
+	// 설정 검증
+	if (!SpawnManager)
+		UE_LOG(LogTemp, Error, TEXT("StageManager '%s': SpawnManager is not set!"), *GetName());
+	if (!BattleManager)
+		UE_LOG(LogTemp, Error, TEXT("StageManager '%s': BattleManager is not set!"), *GetName());
+	
+	// 매니저들 초기화 (순서 보장)
 	if (BattleManager)
 	{
+		BattleManager->Initialize();
 		BattleManager->OnBattleCompleted.AddDynamic(this, &AStageManager::HandleBattleCompleted);
-		UE_LOG(LogTemp, Log, TEXT("Subscribed to BattleManager events"));
+		UE_LOG(LogTemp, Log, TEXT("BattleManager initialized and subscribed"));
+	}
+	
+	if (SpawnManager)
+	{
+		SpawnManager->Initialize();
 	}
 	
 	// 자동 시작
