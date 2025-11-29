@@ -129,7 +129,8 @@ void ACharacterBase::Die()
 	// 사망 이벤트 브로드캐스트
 	OnCharacterDied.Broadcast(this);
 
-	// TODO: 사망 애니메이션 후 액터 제거 또는 비활성화
+	// 이 캐릭터를 타겟으로 하는 다른 캐릭터들의 공격 중지
+	// (BattleManager가 처리하도록 이벤트만 발행)
 }
 
 void ACharacterBase::StartAttacking()
@@ -152,7 +153,9 @@ void ACharacterBase::PerformAttack()
 {
 	if (!bIsAlive || !CurrentTarget || !CurrentTarget->bIsAlive)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s stopping attack - target invalid or dead"), *GetName());
 		StopAttacking();
+		CurrentTarget = nullptr;
 		return;
 	}
 
