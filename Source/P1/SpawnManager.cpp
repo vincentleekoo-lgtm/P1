@@ -22,12 +22,35 @@ void ASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogTemp, Warning, TEXT("===== SpawnManager Created - Name: %s ====="), *GetName());
+
+	// 설정 검증 - 하나라도 없으면 잘못 배치된 액터
+	bool bHasConfiguration = WarriorClass && PartySpawnPoint && OrcClass && EnemySpawnPoint && BattleManager;
+	
+	if (!bHasConfiguration)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnManager '%s' has missing configuration! This actor should be removed from the level."), *GetName());
+		
+		if (!WarriorClass)
+			UE_LOG(LogTemp, Warning, TEXT("  - WarriorClass is not set!"));
+		if (!PartySpawnPoint)
+			UE_LOG(LogTemp, Warning, TEXT("  - PartySpawnPoint is not set!"));
+		if (!OrcClass)
+			UE_LOG(LogTemp, Warning, TEXT("  - OrcClass is not set!"));
+		if (!EnemySpawnPoint)
+			UE_LOG(LogTemp, Warning, TEXT("  - EnemySpawnPoint is not set!"));
+		if (!BattleManager)
+			UE_LOG(LogTemp, Warning, TEXT("  - BattleManager is not set!"));
+	}
+
 	// StageManager가 호출할 때까지 대기
 	// SpawnCharacters()는 수동으로 호출됨
 }
 
 void ASpawnManager::SpawnCharacters()
 {
+	UE_LOG(LogTemp, Log, TEXT("SpawnCharacters called on: %s"), *GetName());
+
 	UWorld* World = GetWorld();
 	if (!World)
 	{

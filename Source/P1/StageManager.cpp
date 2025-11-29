@@ -25,7 +25,13 @@ void AStageManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UE_LOG(LogTemp, Log, TEXT("StageManager Created - Stage: %s"), *StageName);
+	UE_LOG(LogTemp, Warning, TEXT("===== StageManager Created - Name: %s, Stage: %s ====="), *GetName(), *StageName);
+	
+	// 설정 검증
+	if (!SpawnManager)
+		UE_LOG(LogTemp, Error, TEXT("StageManager '%s': SpawnManager is not set!"), *GetName());
+	if (!BattleManager)
+		UE_LOG(LogTemp, Error, TEXT("StageManager '%s': BattleManager is not set!"), *GetName());
 	
 	// BattleManager 이벤트 구독
 	if (BattleManager)
