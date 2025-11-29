@@ -48,9 +48,56 @@ CharacterBase (베이스 클래스)
 
 ---
 
+---
+
+## 게임 구조 설계
+
+### 2025-11-29
+#### 전체 아키텍처
+```
+GameManager (GameInstance Subsystem)
+  - 게임 전체 상태 관리
+  - 로그인/아웃게임 관리
+  - 컷신 재생
+  - 스테이지 전환
+  
+  └── StageManager (Actor/GameMode)
+      - 현재 스테이지 정보
+      - 웨이브/목표 관리
+      
+      ├── SpawnManager (Actor)
+      │   - 캐릭터 초기 배치
+      │   - 스폰 위치 관리
+      
+      └── BattleManager (Actor)
+          - 전투 흐름 제어
+          - 턴/실시간 전투 관리
+          - 승패 판정
+```
+
+#### 게임 상태(State) 정의
+- `Login`: 로그인 화면
+- `OutGame`: 메인 메뉴, 캐릭터 선택, 장비 관리
+- `Cutscene`: 스토리 컷신 재생
+- `InBattle`: 전투 진행 중
+- `BattleResult`: 전투 결과 화면
+- `GameOver`: 게임 오버
+
+#### 게임 플로우
+```
+Login → OutGame → Cutscene(선택) → InBattle → BattleResult → OutGame
+                      ↑                                          ↓
+                      └──────────── (다음 스테이지) ────────────┘
+```
+
+---
+
 ## 다음 작업 예정
-- [ ] CharacterBase C++ 클래스 생성
-- [ ] PaperFlipbook 컴포넌트 통합
-- [ ] PartyMember 클래스 구현
-- [ ] Enemy 클래스 구현
-- [ ] 애니메이션 스테이트 머신 구현
+- [x] CharacterBase C++ 클래스 생성
+- [x] PaperFlipbook 컴포넌트 통합
+- [x] PartyMember 클래스 구현
+- [x] Enemy 클래스 구현
+- [x] SpawnManager 구현
+- [ ] GameManager 구현
+- [ ] StageManager 구현
+- [ ] BattleManager 구현
