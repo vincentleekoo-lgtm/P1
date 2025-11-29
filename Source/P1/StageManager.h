@@ -49,6 +49,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stage")
 	EStageState CurrentStageState;
 
+	// 자동 시작 옵션
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stage")
+	bool bAutoStartOnBeginPlay;
+
 	// 스폰 매니저 참조
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Managers")
 	ASpawnManager* SpawnManager;

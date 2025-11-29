@@ -15,6 +15,7 @@ AStageManager::AStageManager()
 	CurrentStageState = EStageState::NotStarted;
 	TotalWaves = 1;
 	CurrentWave = 0;
+	bAutoStartOnBeginPlay = true;  // 기본값: 자동 시작
 
 	SpawnManager = nullptr;
 	BattleManager = nullptr;
@@ -31,6 +32,13 @@ void AStageManager::BeginPlay()
 	{
 		BattleManager->OnBattleCompleted.AddDynamic(this, &AStageManager::HandleBattleCompleted);
 		UE_LOG(LogTemp, Log, TEXT("Subscribed to BattleManager events"));
+	}
+	
+	// 자동 시작
+	if (bAutoStartOnBeginPlay)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Auto-starting stage..."));
+		StartStage();
 	}
 }
 
