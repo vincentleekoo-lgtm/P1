@@ -15,6 +15,14 @@ ACharacterBase::ACharacterBase()
 	WalkFlipbook = nullptr;
 	SlashFlipbook = nullptr;
 	DeadFlipbook = nullptr;
+
+	// 전투 속성 초기화
+	MaxHealth = 100;
+	CurrentHealth = MaxHealth;
+	AttackPower = 10;
+	AttackInterval = 2.0f;
+	bIsAlive = true;
+	CurrentTarget = nullptr;
 }
 
 void ACharacterBase::BeginPlay()
@@ -64,4 +72,89 @@ UPaperFlipbook* ACharacterBase::GetFlipbookForState(ECharacterState State) const
 	default:
 		return IdleFlipbook;
 	}
+}
+
+void ACharacterBase::TakeDamage(int32 DamageAmount, ACharacterBase* Attacker)
+{
+	if (!bIsAlive)
+		return;
+
+	CurrentHealth -= DamageAmount;
+	UE_LOG(LogTemp, Log, TEXT("%s took %d damage. Health: %d/%d"), *GetName(), DamageAmount, CurrentHealth, MaxHealth);
+
+	if (CurrentHealth <= 0)
+	{
+		CurrentHealth = 0;
+		Die();
+	}
+}
+
+void ACharacterBase::Attack(ACharacterBase* Target)
+{
+	if (!bIsAlive || !Target || !Target->bIsAlive)
+		return;
+
+	// 공격 애니메이션
+	SetCharacterState(ECharacterState::Slash);
+
+	// 데미지 적용
+	Target->TakeDamage(AttackPower, this);
+
+	UE_LOG(LogTemp, Log, TEXT("%s attacks %s for %d damage"), *GetName(), *Target->GetName(), AttackPower);
+
+	// 애니메이션 후 Idle로 복귀 (타이머로 처리 가능)
+	FTimerHandle AnimTimer;
+	GetWorld()->GetTimerManager().SetTimer(AnimTimer, [this]()
+	{
+		if (bIsAlive)
+		{
+			SetCharacterState(ECharacterState::Idle);
+		}
+	}, 0.5f, false);
+}
+
+void ACharacterBase::Die()
+{
+	if (!bIsAlive)
+		return;
+
+	bIsAlive = false;
+	SetCharacterState(ECharacterState::Dead);
+	
+	// 공격 중지
+	StopAttacking();
+
+	UE_LOG(LogTemp, Log, TEXT("%s has died"), *GetName());
+
+	// 사망 이벤트 브로드캐스트
+	OnCharacterDied.Broadcast(this);
+
+	// TODO: 사망 애니메이션 후 액터 제거 또는 비활성화
+}
+
+void ACharacterBase::StartAttacking()
+{
+	if (!bIsAlive || !CurrentTarget)
+		return;
+
+	UE_LOG(LogTemp, Log, TEXT("%s started attacking %s"), *GetName(), *CurrentTarget->GetName());
+
+	// 주기적으로 공격
+	GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ACharacterBase::PerformAttack, AttackInterval, true, 0.0f);
+}
+
+void ACharacterBase::StopAttacking()
+{
+	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+}
+
+void ACharacterBase::PerformAttack()
+{
+	if (!bIsAlive || !CurrentTarget || !CurrentTarget->bIsAlive)
+	{
+		StopAttacking();
+		return;
+	}
+
+	Attack(CurrentTarget);
 }

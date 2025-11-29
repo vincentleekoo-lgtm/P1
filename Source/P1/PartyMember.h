@@ -30,10 +30,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Party")
 	int32 Level;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Party")
-	int32 Health;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Party")
-	int32 MaxHealth;
 };

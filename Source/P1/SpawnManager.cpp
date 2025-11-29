@@ -54,6 +54,9 @@ void ASpawnManager::SpawnCharacters()
 			if (BattleManager)
 			{
 				BattleManager->RegisterPartyMember(SpawnedWarrior);
+				
+				// 사망 이벤트 연결
+				SpawnedWarrior->OnCharacterDied.AddDynamic(BattleManager, &ABattleManager::OnCharacterDied);
 			}
 		}
 		else
@@ -88,6 +91,9 @@ void ASpawnManager::SpawnCharacters()
 			if (BattleManager)
 			{
 				BattleManager->RegisterEnemy(SpawnedOrc);
+				
+				// 사망 이벤트 연결
+				SpawnedOrc->OnCharacterDied.AddDynamic(BattleManager, &ABattleManager::OnCharacterDied);
 			}
 		}
 		else

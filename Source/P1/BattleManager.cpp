@@ -47,6 +47,40 @@ void ABattleManager::StartBattle()
 	
 	ChangeBattleState(EBattleState::InProgress);
 	OnBattleStarted.Broadcast();
+
+	// 전투 시작: 모든 캐릭터에게 타겟 할당 및 공격 시작
+	AssignTargetsAndStartCombat();
+}
+
+void ABattleManager::AssignTargetsAndStartCombat()
+{
+	// 아군 -> 첫 번째 적 타겟팅
+	if (Enemies.Num() > 0)
+	{
+		for (APartyMember* Member : PartyMembers)
+		{
+			if (Member && Member->bIsAlive)
+			{
+				Member->CurrentTarget = Enemies[0];
+				Member->StartAttacking();
+			}
+		}
+	}
+
+	// 적군 -> 첫 번째 아군 타겟팅
+	if (PartyMembers.Num() > 0)
+	{
+		for (AEnemy* Enemy : Enemies)
+		{
+			if (Enemy && Enemy->bIsAlive)
+			{
+				Enemy->CurrentTarget = PartyMembers[0];
+				Enemy->StartAttacking();
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Combat targets assigned and attacks started"));
 }
 
 void ABattleManager::EndBattle(bool bVictory)
@@ -118,7 +152,7 @@ void ABattleManager::UnregisterEnemy(AEnemy* Enemy)
 	}
 }
 
-void ABattleManager::OnCharacterDied(AActor* Character)
+void ABattleManager::OnCharacterDied(ACharacterBase* Character)
 {
 	if (!Character)
 		return;

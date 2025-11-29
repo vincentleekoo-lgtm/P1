@@ -9,8 +9,6 @@ APartyMember::APartyMember()
 	// 기본 스탯 설정
 	CharacterName = TEXT("Party Member");
 	Level = 1;
-	MaxHealth = 100;
-	Health = MaxHealth;
 }
 
 void APartyMember::BeginPlay()

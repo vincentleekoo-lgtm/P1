@@ -29,14 +29,5 @@ public:
 	FString EnemyType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	int32 Health;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	int32 MaxHealth;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	int32 AttackPower;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float DetectionRange;
 };

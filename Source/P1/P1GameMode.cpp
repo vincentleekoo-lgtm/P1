@@ -8,6 +8,9 @@
 
 AP1GameMode::AP1GameMode()
 {
+	// DefaultPawn 자동 스폰 비활성화
+	DefaultPawnClass = nullptr;
+	
 	PartySpawnPoint = nullptr;
 	EnemySpawnPoint = nullptr;
 	WarriorClass = nullptr;

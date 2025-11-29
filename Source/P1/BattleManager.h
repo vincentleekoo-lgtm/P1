@@ -102,8 +102,8 @@ public:
 	void UnregisterEnemy(AEnemy* Enemy);
 
 	// 캐릭터 사망 처리
-	UFUNCTION(BlueprintCallable, Category = "Battle")
-	void OnCharacterDied(AActor* Character);
+	UFUNCTION()
+	void OnCharacterDied(ACharacterBase* Character);
 
 	// 승패 체크
 	UFUNCTION(BlueprintCallable, Category = "Battle")
@@ -111,4 +111,7 @@ public:
 
 private:
 	void ChangeBattleState(EBattleState NewState);
+	
+	// 전투 시작: 타겟 할당 및 공격 시작
+	void AssignTargetsAndStartCombat();
 };
