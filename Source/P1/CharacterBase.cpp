@@ -9,14 +9,10 @@ ACharacterBase::ACharacterBase()
 
 	// 기본 상태 설정
 	CurrentState = ECharacterState::Idle;
+	Team = ETeam::Neutral;
+	CharacterData = nullptr;
 
-	// 플립북 초기화
-	IdleFlipbook = nullptr;
-	WalkFlipbook = nullptr;
-	SlashFlipbook = nullptr;
-	DeadFlipbook = nullptr;
-
-	// 전투 속성 초기화
+	// 전투 속성 초기화 (DataAsset에서 로드될 예정)
 	MaxHealth = 100;
 	CurrentHealth = MaxHealth;
 	AttackPower = 10;
@@ -29,8 +25,39 @@ void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// CharacterData가 있으면 자동 초기화
+	if (CharacterData)
+	{
+		InitializeFromData(CharacterData, Team);
+	}
+	
 	// 시작 시 애니메이션 업데이트
 	UpdateAnimation();
+}
+
+void ACharacterBase::InitializeFromData(UCharacterData* Data, ETeam AssignedTeam)
+{
+	if (!Data)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: CharacterData is null!"), *GetName());
+		return;
+	}
+
+	CharacterData = Data;
+	Team = AssignedTeam;
+
+	// 스탯 로드
+	MaxHealth = Data->BaseStats.MaxHealth;
+	CurrentHealth = MaxHealth;
+	AttackPower = Data->BaseStats.AttackPower;
+	
+	// AttackSpeed를 AttackInterval로 변환 (AttackSpeed가 높을수록 빠름)
+	AttackInterval = Data->BaseStats.AttackSpeed > 0 ? (1.0f / Data->BaseStats.AttackSpeed) : 2.0f;
+
+	bIsAlive = true;
+
+	UE_LOG(LogTemp, Log, TEXT("%s initialized: %s (Team: %d, HP: %d, ATK: %d)"), 
+		*GetName(), *Data->CharacterName, static_cast<int32>(Team), MaxHealth, AttackPower);
 }
 
 void ACharacterBase::Tick(float DeltaTime)
@@ -59,22 +86,25 @@ void ACharacterBase::UpdateAnimation()
 
 UPaperFlipbook* ACharacterBase::GetFlipbookForState(ECharacterState State) const
 {
+	if (!CharacterData)
+		return nullptr;
+
 	switch (State)
 	{
 	case ECharacterState::Idle:
-		return IdleFlipbook;
+		return CharacterData->Animations.IdleFlipbook;
 	case ECharacterState::Walk:
-		return WalkFlipbook;
+		return CharacterData->Animations.WalkFlipbook;
 	case ECharacterState::Slash:
-		return SlashFlipbook;
+		return CharacterData->Animations.SlashFlipbook;
 	case ECharacterState::Dead:
-		return DeadFlipbook;
+		return CharacterData->Animations.DeadFlipbook;
 	default:
-		return IdleFlipbook;
+		return CharacterData->Animations.IdleFlipbook;
 	}
 }
 
-void ACharacterBase::TakeDamage(int32 DamageAmount, ACharacterBase* Attacker)
+void ACharacterBase::ApplyDamage(int32 DamageAmount, ACharacterBase* Attacker)
 {
 	if (!bIsAlive)
 		return;
@@ -98,7 +128,7 @@ void ACharacterBase::Attack(ACharacterBase* Target)
 	SetCharacterState(ECharacterState::Slash);
 
 	// 데미지 적용
-	Target->TakeDamage(AttackPower, this);
+	Target->ApplyDamage(AttackPower, this);
 
 	UE_LOG(LogTemp, Log, TEXT("%s attacks %s for %d damage"), *GetName(), *Target->GetName(), AttackPower);
 

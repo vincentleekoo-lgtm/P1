@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "PaperCharacter.h"
+#include "CharacterData.h"
 #include "CharacterBase.generated.h"
 
 class UPaperFlipbook;
 class ABattleManager;
+class UCharacterData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDied, ACharacterBase*, Character);
 
@@ -22,7 +24,9 @@ enum class ECharacterState : uint8
 
 /**
  * 2D 캐릭터 베이스 클래스
- * Idle, Walk, Slash, Dead 플립북 애니메이션 지원
+ * - CharacterData (DataAsset) 기반
+ * - Team 속성으로 아군/적군 구분
+ * - 같은 캐릭터를 양쪽 팀에서 사용 가능
  */
 UCLASS()
 class P1_API ACharacterBase : public APaperCharacter
@@ -38,49 +42,25 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	// 플립북 애니메이션
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UPaperFlipbook* IdleFlipbook;
+	// ========== 캐릭터 데이터 ==========
+	
+	// 캐릭터 정보 (DataAsset)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	TObjectPtr<UCharacterData> CharacterData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UPaperFlipbook* WalkFlipbook;
+	// 소속 팀
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	ETeam Team;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UPaperFlipbook* SlashFlipbook;
+	// 캐릭터 초기화 (DataAsset에서 스탯 로드)
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	void InitializeFromData(UCharacterData* Data, ETeam AssignedTeam);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UPaperFlipbook* DeadFlipbook;
+	// ========== 애니메이션 ==========
 
 	// 현재 상태
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	ECharacterState CurrentState;
-
-	// 체력 시스템
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	int32 MaxHealth;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	int32 CurrentHealth;
-
-	// 공격력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	int32 AttackPower;
-
-	// 공격 주기 (초)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	float AttackInterval;
-
-	// 살아있는지 여부
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	bool bIsAlive;
-
-	// 사망 이벤트
-	UPROPERTY(BlueprintAssignable, Category = "Combat")
-	FOnCharacterDied OnCharacterDied;
-
-	// 현재 타겟 (public으로 변경하여 BattleManager가 접근 가능)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	ACharacterBase* CurrentTarget;
 
 	// 상태 변경 함수
 	UFUNCTION(BlueprintCallable, Category = "Animation")
@@ -90,9 +70,44 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void UpdateAnimation();
 
-	// 전투 시스템
+	// ========== 전투 스탯 ==========
+
+	// ========== 전투 스탯 ==========
+
+	// 체력 (전투 중 변동)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	int32 MaxHealth;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	int32 CurrentHealth;
+
+	// 공격력 (DataAsset에서 로드)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	int32 AttackPower;
+
+	// 공격 주기 (초) - AttackSpeed에서 계산
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float AttackInterval;
+
+	// 살아있는지 여부
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsAlive;
+
+	// ========== 전투 시스템 ==========
+
+	// ========== 전투 시스템 ==========
+
+	// 사망 이벤트
+	UPROPERTY(BlueprintAssignable, Category = "Combat")
+	FOnCharacterDied OnCharacterDied;
+
+	// 현재 타겟
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	ACharacterBase* CurrentTarget;
+
+	// 전투 함수
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	virtual void TakeDamage(int32 DamageAmount, ACharacterBase* Attacker);
+	virtual void ApplyDamage(int32 DamageAmount, ACharacterBase* Attacker);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void Attack(ACharacterBase* Target);
@@ -107,7 +122,7 @@ public:
 	virtual void StopAttacking();
 
 protected:
-	// 상태에 맞는 플립북 가져오기
+	// DataAsset에서 플립북 가져오기
 	UPaperFlipbook* GetFlipbookForState(ECharacterState State) const;
 
 	// 공격 타이머
