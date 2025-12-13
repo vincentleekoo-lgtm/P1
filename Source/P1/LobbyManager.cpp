@@ -7,6 +7,11 @@ ALobbyManager::ALobbyManager()
 	PrimaryActorTick.bCanEverTick = false;
 
 	MaxSlots = 5;
+	
+	// 플레이어 자원 초기값
+	Gold = 1000;
+	Stamina = 100;
+	MaxStamina = 100;
 }
 
 void ALobbyManager::BeginPlay()

@@ -314,3 +314,264 @@ CharacterData에서 DataTable Row 선택 시 스탯 자동 채움
 - [ ] LobbyManager ↔ StageManager 연동
 - [ ] 캐릭터 획득 시스템
 - [ ] 세이브/로드 시스템
+
+---
+
+## 로비 메인 메뉴 시스템 (2025-12-13)
+
+### 게임 플로우 개선
+기존: 플레이 시작 → 즉시 전투  
+**신규**: 플레이 시작 → 로비 메인 메뉴 → 활동 선택 → 해당 시스템
+
+### 로비 메인 메뉴 카테고리
+```
+LobbyMainMenu (메인 허브)
+├── 전투 시작 (Battle)
+│   └── 덱 편성 확인 → StageManager → 전투 진입
+│
+├── 덱 관리 (Deck Management)
+│   ├── 캐릭터 목록 확인
+│   ├── 전투 편성 (5개 슬롯)
+│   ├── 캐릭터 강화 (향후 확장)
+│   └── 장비 장착 (향후 확장)
+│
+├── 사냥 (Hunting)
+│   ├── 몬스터 토벌 (경험치/골드 획득)
+│   ├── 보스 도전
+│   ├── 일일 던전
+│   └── 이벤트 전투
+│
+└── 채집 (Gathering)
+    ├── 자원 수집 (재료 아이템)
+    ├── 광물 채광
+    ├── 약초 채집
+    └── 낚시/요리 (향후 확장)
+```
+
+### 시스템 구조 설계
+
+#### LobbyMainMenuWidget (UMG)
+로비 메인 화면 UI
+
+**UI 구성:**
+```
+Canvas Panel (Root)
+├── Vertical Box (Left Panel - 메뉴 버튼들)
+│   ├── Button (BattleButton) - "전투 시작"
+│   ├── Button (DeckManagementButton) - "덱 관리"
+│   ├── Button (HuntingButton) - "사냥"
+│   └── Button (GatheringButton) - "채집"
+│
+├── Panel (ContentPanel) - 선택한 카테고리 내용 표시 영역
+│   └── WidgetSwitcher (카테고리별 UI 전환)
+│       ├── Slot 0: BattleMenuWidget
+│       ├── Slot 1: DeckManagementWidget (기존 LobbyUIWidget 재활용)
+│       ├── Slot 2: HuntingMenuWidget
+│       └── Slot 3: GatheringMenuWidget
+│
+└── Panel (TopBar) - 플레이어 정보
+    ├── TextBlock (PlayerName)
+    ├── TextBlock (GoldAmount)
+    ├── TextBlock (Level)
+    └── ProgressBar (Experience)
+```
+
+#### 카테고리별 위젯 설계
+
+**1. BattleMenuWidget**
+전투 시작 준비 화면
+- 현재 편성된 덱 미리보기 (5개 슬롯)
+- 스테이지 선택 (1-1, 1-2, ...)
+- 난이도 선택 (Normal, Hard, Expert)
+- "전투 시작" 버튼 → IsFormationValid() 체크 → StageManager 전환
+
+**2. DeckManagementWidget**
+기존 LobbyUIWidget 재활용
+- CharacterListScrollBox: 보유 캐릭터 목록
+- DeckSlot_0~4: 전투 편성 슬롯
+- 드래그 앤 드롭 캐릭터 배치
+- "편성 저장" 버튼
+
+**3. HuntingMenuWidget**
+사냥터 선택 화면
+- 사냥터 목록 (Scroll Box)
+  - 사냥터 이름, 추천 레벨, 보상 정보
+  - 입장 조건 (스태미나 소모 등)
+- 선택한 사냥터 상세 정보
+  - 출현 몬스터 목록
+  - 드롭 아이템 정보
+- "입장" 버튼 → BattleManager (사냥 모드)
+
+**4. GatheringMenuWidget**
+채집 활동 화면
+- 채집 장소 목록
+  - 숲, 광산, 호수 등
+  - 획득 가능 자원 표시
+- 채집 미니게임 (향후 구현)
+- 획득한 재료 목록
+- "채집 시작" 버튼
+
+### 데이터 구조
+
+#### ELobbyMenuCategory (Enum)
+```cpp
+UENUM(BlueprintType)
+enum class ELobbyMenuCategory : uint8
+{
+    Battle UMETA(DisplayName = "Battle"),
+    DeckManagement UMETA(DisplayName = "Deck Management"),
+    Hunting UMETA(DisplayName = "Hunting"),
+    Gathering UMETA(DisplayName = "Gathering")
+};
+```
+
+#### FHuntingArea (Struct)
+```cpp
+USTRUCT(BlueprintType)
+struct FHuntingArea
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString AreaName;  // "고블린 숲", "오크 요새"
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 RecommendedLevel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 StaminaCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<UCharacterData*> EnemyList;  // 출현 몬스터
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 GoldReward;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 ExpReward;
+};
+```
+
+#### FGatheringSpot (Struct)
+```cpp
+USTRUCT(BlueprintType)
+struct FGatheringSpot
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString SpotName;  // "신비로운 숲", "철광산"
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FString> AvailableResources;  // "나무", "철광석"
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 StaminaCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float GatheringTime;  // 채집 소요 시간 (초)
+};
+```
+
+### LobbyManager 확장
+
+```cpp
+class ALobbyManager : public AActor
+{
+    // 기존 덱 관리 기능 유지...
+
+    // 신규: 메뉴 카테고리 관리
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+    ELobbyMenuCategory CurrentCategory;
+
+    // 신규: 사냥터 데이터
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hunting")
+    TArray<FHuntingArea> HuntingAreas;
+
+    // 신규: 채집 장소 데이터
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gathering")
+    TArray<FGatheringSpot> GatheringSpots;
+
+    // 신규: 플레이어 자원
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+    int32 Gold;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+    int32 Stamina;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+    int32 MaxStamina;
+
+    // 신규: 카테고리 전환
+    UFUNCTION(BlueprintCallable, Category = "Menu")
+    void SwitchCategory(ELobbyMenuCategory NewCategory);
+
+    // 신규: 사냥 시작
+    UFUNCTION(BlueprintCallable, Category = "Hunting")
+    void StartHunting(FHuntingArea HuntingArea);
+
+    // 신규: 채집 시작
+    UFUNCTION(BlueprintCallable, Category = "Gathering")
+    void StartGathering(FGatheringSpot GatheringSpot);
+};
+```
+
+### 구현 우선순위
+
+**Phase 1: 메인 메뉴 UI 구조 (현재 작업)**
+- [ ] ELobbyMenuCategory enum 생성
+- [ ] LobbyMainMenuWidget C++ 클래스 생성
+- [ ] WBP_LobbyMainMenu Blueprint 생성
+- [ ] 4개 카테고리 버튼 배치
+- [ ] WidgetSwitcher로 카테고리 전환
+
+**Phase 2: 전투 시작 플로우**
+- [ ] BattleMenuWidget 생성
+- [ ] 덱 미리보기 표시
+- [ ] 스테이지 선택 UI
+- [ ] LobbyManager → StageManager 연동
+
+**Phase 3: 덱 관리 통합**
+- [ ] 기존 LobbyUIWidget → DeckManagementWidget 리팩토링
+- [ ] 메인 메뉴에서 덱 관리 진입
+- [ ] 편성 저장 기능
+
+**Phase 4: 사냥 시스템 (확장)**
+- [ ] FHuntingArea struct 구현
+- [ ] HuntingMenuWidget 생성
+- [ ] 사냥터 목록 표시
+- [ ] 사냥 입장 → BattleManager (사냥 모드)
+
+**Phase 5: 채집 시스템 (확장)**
+- [ ] FGatheringSpot struct 구현
+- [ ] GatheringMenuWidget 생성
+- [ ] 채집 장소 목록
+- [ ] 채집 미니게임 (단순 타이머)
+
+### 게임 플로우 (업데이트)
+```
+게임 시작
+    ↓
+Level Blueprint (BeginPlay)
+    ↓
+LobbyMainMenuWidget 생성 및 표시
+    ↓
+┌─────────────────────────────┐
+│    로비 메인 메뉴           │
+│  [전투] [덱] [사냥] [채집]  │
+└─────────────────────────────┘
+    ↓
+사용자 선택
+    ├─→ 전투 시작 → BattleMenuWidget → StageManager → 전투
+    ├─→ 덱 관리 → DeckManagementWidget → 캐릭터 편성
+    ├─→ 사냥 → HuntingMenuWidget → 사냥터 선택 → 전투
+    └─→ 채집 → GatheringMenuWidget → 채집 장소 선택 → 채집
+```
+
+### 기술 스택 업데이트
+- **UI**: UMG (WidgetSwitcher 활용한 멀티 패널)
+- **상태 관리**: ELobbyMenuCategory enum
+- **데이터 구조**: FHuntingArea, FGatheringSpot structs
+- **네비게이션**: 카테고리 버튼 → WidgetSwitcher 인덱스 전환
+
+---

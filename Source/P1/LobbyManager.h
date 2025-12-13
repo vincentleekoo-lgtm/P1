@@ -134,6 +134,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class ULobbyUIWidget> LobbyUIClass;
 
+	// 로비 메인 메뉴 위젯 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class ULobbyMainMenuWidget> MainMenuWidgetClass;
+
+	// ========== 플레이어 자원 ==========
+
+	// 골드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Resources")
+	int32 Gold;
+
+	// 스태미나
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Resources")
+	int32 Stamina;
+
+	// 최대 스태미나
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Resources")
+	int32 MaxStamina;
+
 	// ========== 전투 시작 ==========
 
 	// 전투 시작 (StageManager에게 전달)
