@@ -1,0 +1,7 @@
+---,StageName,StageLevel,Description,EnemyCount,GoldReward,ExpReward,bIsUnlocked
+Stage_1_1,1-1 숲의 입구,5,오크들이 점령한 숲,3,100,50,true
+Stage_1_2,1-2 깊은 숲,7,더 강한 오크 무리,4,150,75,true
+Stage_1_3,1-3 숲의 보스,10,오크 대장이 지키는 곳,5,300,150,false
+Stage_2_1,2-1 동굴 입구,12,어두운 동굴,4,200,100,false
+Stage_2_2,2-2 깊은 동굴,15,위험한 몬스터들,5,250,125,false
+Stage_2_3,2-3 동굴의 보스,18,동굴의 지배자,6,500,250,false

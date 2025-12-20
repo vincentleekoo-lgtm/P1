@@ -91,6 +91,10 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> StaminaText;
 
+	// 덱 관리 위젯 (Slot 1에 배치됨, 선택적)
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class ULobbyUIWidget> DeckManagementWidget;
+
 protected:
 	// LobbyManager 참조
 	UPROPERTY()

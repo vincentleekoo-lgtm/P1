@@ -304,14 +304,77 @@ CharacterData에서 DataTable Row 선택 시 스탯 자동 채움
 
 ---
 
+## 완료된 작업 (2025-12-13)
+- [x] ELobbyMenuCategory enum 생성 (Battle, DeckManagement, Hunting, Gathering)
+- [x] LobbyMainMenuWidget C++ 클래스 생성
+- [x] WBP_LobbyMainMenu Blueprint 생성 (WidgetSwitcher 패턴)
+- [x] LobbyManager 플레이어 자원 추가 (Gold, Stamina, MaxStamina)
+- [x] 4개 카테고리 버튼 구현 및 전환 로직
+- [x] Level Blueprint 수정 (WBP_LobbyMainMenu 사용)
+- [x] GitHub 커밋 및 푸시 (commit e616cd8)
+
+---
+
+## 완료된 작업 (2025-12-20)
+
+### Phase 3: 덱 관리 통합
+- [x] WBP_LobbyUI를 LobbyMainMenuWidget Slot 1에 통합
+- [x] DeckManagementWidget BindWidgetOptional 추가
+- [x] ContentSwitcher Slot 검색 로직 구현
+- [x] SetLobbyManager 자동 전파 (MainMenu → DeckManagement)
+- [x] Level Blueprint 수정 (SetLobbyManager 호출 추가)
+- [x] 상세 로그 시스템 추가 (디버깅용)
+
+### 전투 시작 시스템 (Phase 2)
+- [x] StageData DataAsset 클래스 생성
+  - [x] FStageDataTableRow 구조체 (CSV 임포트)
+  - [x] CSV 기반 자동 데이터 할당
+  - [x] PostEditChangeProperty 구현
+- [x] StageDataTable.csv 생성 (6개 스테이지)
+- [x] StageButtonWidget C++ 클래스 생성
+  - [x] 스테이지 선택 버튼
+  - [x] 클릭 이벤트 델리게이트
+- [x] BattleMenuWidget C++ 클래스 생성
+  - [x] 월드맵 UI
+  - [x] 스테이지 버튼 자동 배치 (3x3 그리드)
+  - [x] 스테이지 정보 표시
+  - [x] 덱 미리보기
+  - [x] 전투 시작 버튼
+- [x] LobbyManager 확장
+  - [x] AvailableStages 배열
+  - [x] StartBattle(UStageData*) 함수
+  - [x] ShowLobbyUI/HideLobbyUI 함수
+  - [x] StageManager 연동
+- [x] StageManager 확장
+  - [x] InitializeWithStageData() 함수
+  - [x] StageData + PlayerFormation 기반 초기화
+  - [x] 기존 SpawnManager, BattleManager 활용
+- [x] 입력 모드 전환 (UI ↔ Game)
+
+---
+
 ## 다음 작업 예정
-- [ ] Dragon DataAsset 생성
-- [ ] 슬롯에서 캐릭터 제거 기능 (우클릭 또는 드래그 아웃)
-- [ ] 덱 중복 배치 방지 로직
-- [ ] 전투 시작 버튼 활성화 (편성 유효성 검증)
-- [ ] SpawnManager 수정 (CharacterData 기반 스폰)
-- [ ] BattleManager 수정 (Team 기반 전투 관리)
-- [ ] LobbyManager ↔ StageManager 연동
+
+### Blueprint 작업 (우선순위)
+- [ ] StageDataTable CSV 임포트 (에디터)
+- [ ] StageData 애셋 생성 (DA_Stage_1_1, DA_Stage_1_2, ...)
+- [ ] WBP_StageButton Blueprint 생성
+- [ ] WBP_BattleMenu Blueprint 생성 및 레이아웃
+- [ ] WBP_LobbyMainMenu Slot 0에 WBP_BattleMenu 배치
+- [ ] LobbyManager에 AvailableStages 설정
+- [ ] 월드맵 이미지 준비 및 적용
+
+### 전투 통합 (Phase 2-2)
+- [ ] CharacterBase.ApplyCharacterData() 구현
+- [ ] SpawnManager CharacterData 기반 스폰 확장
+- [ ] StageManager 캐릭터 스폰 로직 구현
+- [ ] 카메라 전환 시스템 (Lobby ↔ Battle)
+- [ ] 전투 종료 → 로비 복귀 플로우
+- [ ] BattleResultWidget 생성
+
+### 향후 확장
+- [ ] 사냥 시스템 (Phase 4)
+- [ ] 채집 시스템 (Phase 5)
 - [ ] 캐릭터 획득 시스템
 - [ ] 세이브/로드 시스템
 
@@ -526,10 +589,16 @@ class ALobbyManager : public AActor
 - [ ] WidgetSwitcher로 카테고리 전환
 
 **Phase 2: 전투 시작 플로우**
+- [ ] StageData DataAsset 생성 (스테이지 정보)
 - [ ] BattleMenuWidget 생성
-- [ ] 덱 미리보기 표시
-- [ ] 스테이지 선택 UI
-- [ ] LobbyManager → StageManager 연동
+  - [ ] 미니맵 UI (월드맵 이미지)
+  - [ ] 스테이지 버튼들 (미니맵 위 배치)
+  - [ ] 덱 미리보기 패널 (현재 편성 표시)
+  - [ ] 전투 시작 버튼
+- [ ] 스테이지 선택 → 전투 시작 플로우
+  - [ ] StageManager 생성 및 초기화
+  - [ ] 카메라 전환 (Lobby → Battle)
+  - [ ] BattleManager 전투 시작
 
 **Phase 3: 덱 관리 통합**
 - [ ] 기존 LobbyUIWidget → DeckManagementWidget 리팩토링
@@ -548,7 +617,710 @@ class ALobbyManager : public AActor
 - [ ] 채집 장소 목록
 - [ ] 채집 미니게임 (단순 타이머)
 
-### 게임 플로우 (업데이트)
+---
+
+## 전투 시작 시스템 설계 (2025-12-20)
+
+### 시스템 개요
+사용자가 "전투 시작" 카테고리 선택 → 미니맵에서 스테이지 선택 → 전투 시작
+
+### StageData (DataAsset)
+각 스테이지의 정보를 저장하는 DataAsset
+
+```cpp
+UCLASS(BlueprintType)
+class UStageData : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    // 스테이지 기본 정보
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stage Info")
+    FString StageName;  // "1-1 숲의 입구"
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stage Info")
+    int32 StageLevel;  // 권장 레벨
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stage Info")
+    FText Description;  // "오크들이 숲을 점령했다!"
+
+    // 미니맵 위치 (UI상 버튼 위치)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Map")
+    FVector2D MapPosition;  // (X, Y) 좌표
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Map")
+    UTexture2D* StageIcon;  // 미니맵 아이콘
+
+    // 전투 설정
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Battle")
+    TArray<TObjectPtr<UCharacterData>> EnemyCharacters;  // 등장 적
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Battle")
+    int32 EnemyCount;  // 적 수
+
+    // 보상
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rewards")
+    int32 GoldReward;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rewards")
+    int32 ExpReward;
+
+    // 해금 조건
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unlock")
+    bool bIsUnlocked = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Unlock")
+    TObjectPtr<UStageData> RequiredPreviousStage;  // 이전 스테이지 클리어 필요
+};
+```
+
+### BattleMenuWidget (C++)
+전투 시작 UI - 미니맵 + 스테이지 선택 + 전투 시작
+
+```cpp
+UCLASS()
+class UBattleMenuWidget : public UUserWidget
+{
+    GENERATED_BODY()
+
+public:
+    // LobbyManager 설정
+    UFUNCTION(BlueprintCallable, Category = "Battle Menu")
+    void SetLobbyManager(ALobbyManager* InLobbyManager);
+
+    // 스테이지 선택
+    UFUNCTION(BlueprintCallable, Category = "Battle Menu")
+    void SelectStage(UStageData* Stage);
+
+    // 전투 시작
+    UFUNCTION(BlueprintCallable, Category = "Battle Menu")
+    void StartBattle();
+
+protected:
+    virtual void NativeConstruct() override;
+
+    // UI 초기화
+    void InitializeStageButtons();
+    void UpdateDeckPreview();
+    void UpdateStageInfo();
+
+    // 버튼 이벤트
+    UFUNCTION()
+    void OnStartBattleButtonClicked();
+
+public:
+    // ========== UI 요소들 ==========
+
+    // 미니맵
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UImage> MinimapImage;
+
+    // 스테이지 버튼 컨테이너 (Canvas Panel)
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UCanvasPanel> StageButtonContainer;
+
+    // 선택된 스테이지 정보 패널
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UTextBlock> StageNameText;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UTextBlock> StageLevelText;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UTextBlock> StageDescriptionText;
+
+    // 덱 미리보기 (현재 편성된 캐릭터들)
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UHorizontalBox> DeckPreviewBox;
+
+    // 전투 시작 버튼
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UButton> StartBattleButton;
+
+    // 스테이지 버튼 위젯 클래스
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<class UStageButtonWidget> StageButtonWidgetClass;
+
+protected:
+    // LobbyManager 참조
+    UPROPERTY()
+    TObjectPtr<ALobbyManager> LobbyManager;
+
+    // 선택된 스테이지
+    UPROPERTY()
+    TObjectPtr<UStageData> SelectedStage;
+
+    // 생성된 스테이지 버튼들
+    UPROPERTY()
+    TArray<TObjectPtr<class UStageButtonWidget>> StageButtons;
+};
+```
+
+### StageButtonWidget (C++)
+미니맵 위 스테이지 선택 버튼
+
+```cpp
+UCLASS()
+class UStageButtonWidget : public UUserWidget
+{
+    GENERATED_BODY()
+
+public:
+    // 스테이지 데이터 설정
+    UFUNCTION(BlueprintCallable, Category = "Stage Button")
+    void SetStageData(UStageData* InStageData);
+
+    // 클릭 이벤트 델리게이트
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStageButtonClicked, UStageData*, StageData);
+    UPROPERTY(BlueprintAssignable, Category = "Stage Button")
+    FOnStageButtonClicked OnStageButtonClickedEvent;
+
+protected:
+    virtual void NativeConstruct() override;
+
+    UFUNCTION()
+    void OnButtonClicked();
+
+public:
+    // UI 요소
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UButton> StageButton;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UImage> StageIconImage;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UTextBlock> StageNumberText;
+
+protected:
+    UPROPERTY()
+    TObjectPtr<UStageData> StageData;
+};
+```
+
+### LobbyManager 확장
+
+```cpp
+class ALobbyManager : public AActor
+{
+    // 기존 코드...
+
+    // 스테이지 목록
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
+    TArray<TObjectPtr<UStageData>> AvailableStages;
+
+    // 현재 선택된 스테이지
+    UPROPERTY(BlueprintReadWrite, Category = "Battle")
+    TObjectPtr<UStageData> CurrentSelectedStage;
+
+    // 전투 시작
+    UFUNCTION(BlueprintCallable, Category = "Battle")
+    void StartBattle(UStageData* Stage);
+};
+```
+
+### UI 레이아웃 (WBP_BattleMenu)
+
+```
+┌─────────────────────────────────────────────────┐
+│  전투 시작                                      │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌─────────────────┐   ┌────────────────────┐ │
+│  │                 │   │ 선택된 스테이지     │ │
+│  │   미니맵        │   │                    │ │
+│  │                 │   │ 이름: 1-1 숲의입구 │ │
+│  │  ●  ●  ●       │   │ 레벨: 5            │ │
+│  │    ●  ●        │   │                    │ │
+│  │  ●     ●       │   │ 설명: ...          │ │
+│  │                 │   │                    │ │
+│  └─────────────────┘   └────────────────────┘ │
+│                                                 │
+│  현재 덱 편성                                   │
+│  ┌───┬───┬───┬───┬───┐                        │
+│  │ 전│ 궁│ 법│   │   │                        │
+│  └───┴───┴───┴───┴───┘                        │
+│                                                 │
+│                      [전투 시작]               │
+└─────────────────────────────────────────────────┘
+```
+
+### 전투 시작 플로우
+
+1. **사용자가 "전투 시작" 카테고리 선택**
+   - LobbyMainMenuWidget → SwitchCategory(Battle)
+   - ContentSwitcher → Slot 0 (BattleMenuWidget) 활성화
+
+2. **BattleMenuWidget 초기화**
+   - `SetLobbyManager()` 호출
+   - `InitializeStageButtons()` → LobbyManager.AvailableStages 읽어서 버튼 생성
+   - 각 StageButton을 MinimapImage 위 Canvas Panel에 배치 (StageData.MapPosition 기준)
+   - `UpdateDeckPreview()` → 현재 BattleFormation 표시
+
+3. **스테이지 선택**
+   - 사용자가 미니맵의 StageButton 클릭
+   - `SelectStage(StageData)` 호출
+   - 선택된 스테이지 정보 표시 (이름, 레벨, 설명, 보상)
+
+4. **전투 시작 버튼 클릭**
+   - `StartBattle()` 호출
+   - LobbyManager.StartBattle(SelectedStage) 호출
+   - LobbyManager가 StageManager 생성 및 초기화
+   - 카메라 전환 (Lobby Camera → Battle Camera)
+   - BattleManager 전투 시작
+
+### StageManager 생성 및 초기화
+
+**기존 StageManager와 통합:**
+- StageManager는 이미 SpawnManager, BattleManager 참조를 가지고 있음
+- StageData를 받아서 적 캐릭터 정보를 SpawnManager에 전달
+- 아군은 LobbyManager의 BattleFormation에서 가져옴
+
+```cpp
+// StageManager.h 확장
+class AStageManager : public AActor
+{
+    // 기존 코드...
+    
+    // 신규: StageData 기반 초기화
+    UFUNCTION(BlueprintCallable, Category = "Stage")
+    void InitializeWithStageData(UStageData* InStageData, const TArray<FBattleSlot>& PlayerFormation);
+    
+    // 스테이지 데이터
+    UPROPERTY(BlueprintReadOnly, Category = "Stage")
+    TObjectPtr<UStageData> StageData;
+    
+    // 플레이어 편성
+    UPROPERTY(BlueprintReadOnly, Category = "Stage")
+    TArray<FBattleSlot> PlayerFormation;
+};
+```
+
+```cpp
+// StageManager.cpp 구현
+void AStageManager::InitializeWithStageData(UStageData* InStageData, const TArray<FBattleSlot>& PlayerFormation)
+{
+    if (!InStageData)
+    {
+        UE_LOG(LogTemp, Error, TEXT("StageData is null!"));
+        return;
+    }
+    
+    StageData = InStageData;
+    this->PlayerFormation = PlayerFormation;
+    
+    StageName = StageData->StageName;
+    StageNumber = InStageData->StageLevel;
+    
+    UE_LOG(LogTemp, Log, TEXT("StageManager initialized with StageData: %s"), *StageName);
+    
+    // BattleManager 초기화
+    if (BattleManager)
+    {
+        BattleManager->Initialize();
+        BattleManager->OnBattleCompleted.AddDynamic(this, &AStageManager::HandleBattleCompleted);
+    }
+    
+    // SpawnManager에 캐릭터 데이터 전달
+    if (SpawnManager)
+    {
+        SpawnManager->Initialize();
+        
+        // 아군 스폰 (PlayerFormation 기반)
+        SpawnPlayerCharacters(PlayerFormation);
+        
+        // 적군 스폰 (StageData 기반)
+        SpawnEnemyCharacters(StageData);
+    }
+    
+    // 스테이지 자동 시작
+    if (bAutoStartOnBeginPlay)
+    {
+        StartStage();
+    }
+}
+
+void AStageManager::SpawnPlayerCharacters(const TArray<FBattleSlot>& Formation)
+{
+    // SpawnManager를 통해 플레이어 캐릭터 스폰
+    for (const FBattleSlot& Slot : Formation)
+    {
+        if (Slot.bIsActive && Slot.CharacterData)
+        {
+            // CharacterData 기반으로 PartyMember 스폰
+            FVector SpawnLocation = CalculateSpawnPosition(Slot.Position, true); // true = 아군
+            APartyMember* Member = SpawnCharacterFromData(Slot.CharacterData, SpawnLocation);
+            
+            if (Member && BattleManager)
+            {
+                BattleManager->RegisterPartyMember(Member);
+            }
+        }
+    }
+}
+
+void AStageManager::SpawnEnemyCharacters(UStageData* InStageData)
+{
+    // StageData에서 적 정보 읽어서 스폰
+    for (int32 i = 0; i < InStageData->EnemyCount; i++)
+    {
+        // 랜덤하게 EnemyCharacters 배열에서 선택
+        if (InStageData->EnemyCharacters.Num() > 0)
+        {
+            int32 RandomIndex = FMath::RandRange(0, InStageData->EnemyCharacters.Num() - 1);
+            UCharacterData* EnemyData = InStageData->EnemyCharacters[RandomIndex];
+            
+            FVector SpawnLocation = CalculateSpawnPosition(i, false); // false = 적군
+            AEnemy* Enemy = SpawnCharacterFromData(EnemyData, SpawnLocation);
+            
+            if (Enemy && BattleManager)
+            {
+                BattleManager->RegisterEnemy(Enemy);
+            }
+        }
+    }
+}
+```
+
+### LobbyManager → StageManager 연동
+
+```cpp
+void ALobbyManager::StartBattle(UStageData* Stage)
+{
+    if (!Stage || !IsFormationValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot start battle: Invalid stage or formation"));
+        return;
+    }
+
+    // 1. StageManager 찾기 (레벨에 미리 배치되어 있음)
+    AStageManager* StageManager = Cast<AStageManager>(
+        UGameplayStatics::GetActorOfClass(GetWorld(), AStageManager::StaticClass())
+    );
+    
+    if (!StageManager)
+    {
+        UE_LOG(LogTemp, Error, TEXT("StageManager not found in level!"));
+        return;
+    }
+    
+    // 2. StageData와 플레이어 편성 전달
+    StageManager->InitializeWithStageData(Stage, BattleFormation);
+    
+    // 3. UI 숨기기
+    if (MainMenuWidget)
+    {
+        MainMenuWidget->RemoveFromParent();
+    }
+    
+    // 4. 카메라 전환
+    SwitchToBattleCamera();
+    
+    // 5. 입력 모드 변경 (UI → Game)
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        FInputModeGameOnly InputMode;
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = false;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("Battle started: %s"), *Stage->StageName);
+}
+
+void ALobbyManager::SwitchToBattleCamera()
+{
+    // Battle Camera는 레벨에 미리 배치되어 있거나 태그로 찾음
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        TArray<AActor*> FoundCameras;
+        UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("BattleCamera"), FoundCameras);
+        
+        if (FoundCameras.Num() > 0)
+        {
+            PC->SetViewTargetWithBlend(FoundCameras[0], 0.5f);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Battle Camera not found! Use tag 'BattleCamera'"));
+        }
+    }
+}
+```
+
+### SpawnManager 확장 (CharacterData 기반 스폰)
+
+**기존 문제:** SpawnManager가 하드코딩된 클래스(WarriorClass, OrcClass)만 스폰
+
+**해결:** CharacterData 기반으로 동적 스폰
+
+```cpp
+// SpawnManager.h 확장
+class ASpawnManager : public AActor
+{
+    // 기존 코드...
+    
+    // 신규: CharacterData 기반 캐릭터 스폰
+    UFUNCTION(BlueprintCallable, Category = "Spawn")
+    APartyMember* SpawnPartyMember(UCharacterData* CharacterData, FVector Location);
+    
+    UFUNCTION(BlueprintCallable, Category = "Spawn")
+    AEnemy* SpawnEnemy(UCharacterData* CharacterData, FVector Location);
+    
+    // 기본 PartyMember/Enemy 클래스 (CharacterData 적용용)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    TSubclassOf<APartyMember> DefaultPartyMemberClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    TSubclassOf<AEnemy> DefaultEnemyClass;
+};
+```
+
+```cpp
+// SpawnManager.cpp 구현
+APartyMember* ASpawnManager::SpawnPartyMember(UCharacterData* CharacterData, FVector Location)
+{
+    if (!CharacterData || !DefaultPartyMemberClass)
+    {
+        return nullptr;
+    }
+    
+    FActorSpawnParameters SpawnParams;
+    APartyMember* Member = GetWorld()->SpawnActor<APartyMember>(
+        DefaultPartyMemberClass, Location, FRotator::ZeroRotator, SpawnParams
+    );
+    
+    if (Member)
+    {
+        Member->ApplyCharacterData(CharacterData);
+        
+        if (BattleManager)
+        {
+            BattleManager->RegisterPartyMember(Member);
+        }
+        
+        UE_LOG(LogTemp, Log, TEXT("Spawned PartyMember: %s at %s"), 
+            *CharacterData->CharacterName, *Location.ToString());
+    }
+    
+    return Member;
+}
+
+AEnemy* ASpawnManager::SpawnEnemy(UCharacterData* CharacterData, FVector Location)
+{
+    if (!CharacterData || !DefaultEnemyClass)
+    {
+        return nullptr;
+    }
+    
+    FActorSpawnParameters SpawnParams;
+    AEnemy* Enemy = GetWorld()->SpawnActor<AEnemy>(
+        DefaultEnemyClass, Location, FRotator::ZeroRotator, SpawnParams
+    );
+    
+    if (Enemy)
+    {
+        Enemy->ApplyCharacterData(CharacterData);
+        
+        if (BattleManager)
+        {
+            BattleManager->RegisterEnemy(Enemy);
+        }
+        
+        UE_LOG(LogTemp, Log, TEXT("Spawned Enemy: %s at %s"), 
+            *CharacterData->CharacterName, *Location.ToString());
+    }
+    
+    return Enemy;
+}
+```
+
+### CharacterBase 확장 (CharacterData 적용)
+
+```cpp
+// CharacterBase.h
+class ACharacterBase : public APaperCharacter
+{
+    // 기존 코드...
+    
+    // CharacterData 적용
+    UFUNCTION(BlueprintCallable, Category = "Character")
+    virtual void ApplyCharacterData(UCharacterData* InCharacterData);
+    
+protected:
+    UPROPERTY(BlueprintReadOnly, Category = "Character")
+    TObjectPtr<UCharacterData> CharacterData;
+};
+```
+
+```cpp
+// CharacterBase.cpp
+void ACharacterBase::ApplyCharacterData(UCharacterData* InCharacterData)
+{
+    if (!InCharacterData)
+    {
+        return;
+    }
+    
+    CharacterData = InCharacterData;
+    
+    // 스탯 적용
+    MaxHealth = InCharacterData->MaxHealth;
+    CurrentHealth = MaxHealth;
+    AttackPower = InCharacterData->AttackPower;
+    Defense = InCharacterData->Defense;
+    AttackSpeed = InCharacterData->AttackSpeed;
+    MoveSpeed = InCharacterData->MoveSpeed;
+    
+    // 애니메이션 Flipbook 적용
+    if (InCharacterData->IdleFlipbook)
+    {
+        IdleFlipbook = InCharacterData->IdleFlipbook;
+    }
+    if (InCharacterData->WalkFlipbook)
+    {
+        WalkFlipbook = InCharacterData->WalkFlipbook;
+    }
+    if (InCharacterData->SlashFlipbook)
+    {
+        SlashFlipbook = InCharacterData->SlashFlipbook;
+    }
+    if (InCharacterData->DeadFlipbook)
+    {
+        DeadFlipbook = InCharacterData->DeadFlipbook;
+    }
+    
+    // Idle 애니메이션으로 시작
+    PlayAnimation(ECharacterState::Idle);
+    
+    UE_LOG(LogTemp, Log, TEXT("Applied CharacterData: %s (HP: %d, ATK: %d)"), 
+        *InCharacterData->CharacterName, MaxHealth, AttackPower);
+}
+```
+
+### 전투 종료 → 로비 복귀 플로우
+
+```cpp
+// StageManager.cpp - 전투 종료 처리
+void AStageManager::HandleBattleCompleted(bool bVictory)
+{
+    if (bVictory)
+    {
+        CompleteStage();
+        ShowBattleResultUI(true); // 승리 UI
+    }
+    else
+    {
+        FailStage();
+        ShowBattleResultUI(false); // 패배 UI
+    }
+}
+
+void AStageManager::ShowBattleResultUI(bool bVictory)
+{
+    // BattleResultWidget 생성 및 표시
+    // "로비로 돌아가기" 버튼 클릭 시 ReturnToLobby() 호출
+}
+
+void AStageManager::ReturnToLobby()
+{
+    // 1. 카메라 전환 (Battle → Lobby)
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        TArray<AActor*> FoundCameras;
+        UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LobbyCamera"), FoundCameras);
+        
+        if (FoundCameras.Num() > 0)
+        {
+            PC->SetViewTargetWithBlend(FoundCameras[0], 0.5f);
+        }
+    }
+    
+    // 2. 스폰된 캐릭터들 제거
+    if (BattleManager)
+    {
+        BattleManager->ClearAllCharacters();
+    }
+    
+    // 3. LobbyManager 찾아서 UI 다시 표시
+    ALobbyManager* LobbyManager = Cast<ALobbyManager>(
+        UGameplayStatics::GetActorOfClass(GetWorld(), ALobbyManager::StaticClass())
+    );
+    
+    if (LobbyManager)
+    {
+        LobbyManager->ShowLobbyUI();
+    }
+    
+    // 4. 입력 모드 변경 (Game → UI)
+    if (PC)
+    {
+        FInputModeUIOnly InputMode;
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = true;
+    }
+}
+```
+
+### LobbyManager UI 재표시
+
+```cpp
+// LobbyManager.h
+class ALobbyManager : public AActor
+{
+    // 기존 코드...
+    
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void ShowLobbyUI();
+    
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void HideLobbyUI();
+};
+```
+
+```cpp
+// LobbyManager.cpp
+void ALobbyManager::ShowLobbyUI()
+{
+    if (!MainMenuWidget && MainMenuWidgetClass)
+    {
+        APlayerController* PC = GetWorld()->GetFirstPlayerController();
+        if (PC)
+        {
+            MainMenuWidget = CreateWidget<ULobbyMainMenuWidget>(PC, MainMenuWidgetClass);
+        }
+    }
+    
+    if (MainMenuWidget)
+    {
+        MainMenuWidget->SetLobbyManager(this);
+        MainMenuWidget->AddToViewport();
+        
+        UE_LOG(LogTemp, Log, TEXT("Lobby UI shown"));
+    }
+}
+
+void ALobbyManager::HideLobbyUI()
+{
+    if (MainMenuWidget)
+    {
+        MainMenuWidget->RemoveFromParent();
+        UE_LOG(LogTemp, Log, TEXT("Lobby UI hidden"));
+    }
+}
+```
+
+### 필요한 에셋
+- [ ] 미니맵 이미지 (Texture2D)
+- [ ] 스테이지 아이콘들 (Texture2D)
+- [ ] StageData 애셋들 (DA_Stage_1_1, DA_Stage_1_2, ...)
+- [ ] Battle Camera Actor (레벨에 배치)
+
+---
+
+## 게임 플로우 (업데이트)
 ```
 게임 시작
     ↓

@@ -2,6 +2,7 @@
 
 #include "LobbyMainMenuWidget.h"
 #include "LobbyManager.h"
+#include "LobbyUIWidget.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/TextBlock.h"
@@ -9,6 +10,8 @@
 void ULobbyMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+	
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] NativeConstruct called"));
 
 	// 버튼 이벤트 바인딩
 	if (BattleButton)
@@ -41,8 +44,51 @@ void ULobbyMainMenuWidget::SetLobbyManager(ALobbyManager* InLobbyManager)
 
 	if (LobbyManager)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] LobbyManager is valid"));
 		UpdatePlayerInfo();
-		UE_LOG(LogTemp, Log, TEXT("LobbyMainMenuWidget: LobbyManager set"));
+		
+		// 덱 관리 위젯에도 LobbyManager 전달
+		if (DeckManagementWidget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] DeckManagementWidget found via BindWidget"));
+			DeckManagementWidget->SetLobbyManager(LobbyManager);
+		}
+		else if (ContentSwitcher)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] DeckManagementWidget not bound, searching in ContentSwitcher..."));
+			UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] ContentSwitcher has %d widgets"), ContentSwitcher->GetNumWidgets());
+			
+			// BindWidget으로 못 찾았으면 ContentSwitcher Slot 1에서 직접 찾기
+			UWidget* SlotWidget = ContentSwitcher->GetWidgetAtIndex(1);
+			if (SlotWidget)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] Slot 1 widget: %s"), *SlotWidget->GetClass()->GetName());
+				ULobbyUIWidget* LobbyUI = Cast<ULobbyUIWidget>(SlotWidget);
+				if (LobbyUI)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] Found ULobbyUIWidget in Slot 1, calling SetLobbyManager"));
+					LobbyUI->SetLobbyManager(LobbyManager);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("[LobbyMainMenuWidget] Slot 1 widget is not ULobbyUIWidget! (Class: %s)"), *SlotWidget->GetClass()->GetName());
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("[LobbyMainMenuWidget] Slot 1 is empty!"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[LobbyMainMenuWidget] ContentSwitcher is NULL!"));
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyMainMenuWidget] SetLobbyManager completed"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyMainMenuWidget] SetLobbyManager called with NULL LobbyManager!"));
 	}
 }
 

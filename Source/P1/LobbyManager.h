@@ -138,6 +138,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class ULobbyMainMenuWidget> MainMenuWidgetClass;
 
+	// 생성된 메인 메뉴 위젯 인스턴스
+	UPROPERTY()
+	TObjectPtr<class ULobbyMainMenuWidget> MainMenuWidget;
+
+	// ========== 스테이지 관리 ==========
+
+	// 사용 가능한 스테이지 목록
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
+	TArray<TObjectPtr<class UStageData>> AvailableStages;
+
+	// 현재 선택된 스테이지
+	UPROPERTY(BlueprintReadWrite, Category = "Battle")
+	TObjectPtr<class UStageData> CurrentSelectedStage;
+
 	// ========== 플레이어 자원 ==========
 
 	// 골드
@@ -154,9 +168,16 @@ public:
 
 	// ========== 전투 시작 ==========
 
-	// 전투 시작 (StageManager에게 전달)
+	// 전투 시작 (StageData 기반)
 	UFUNCTION(BlueprintCallable, Category = "Battle")
-	void StartBattle();
+	void StartBattle(class UStageData* Stage);
+
+	// UI 표시/숨기기
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ShowLobbyUI();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void HideLobbyUI();
 
 	// 초기화
 	UFUNCTION(BlueprintCallable, Category = "Lobby")

@@ -55,26 +55,38 @@ void ULobbyUIWidget::NativeConstruct()
 
 void ULobbyUIWidget::SetLobbyManager(ALobbyManager* InLobbyManager)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] SetLobbyManager called"));
+	
 	LobbyManager = InLobbyManager;
 	
 	if (LobbyManager)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] LobbyManager is valid, calling InitializeUI"));
 		InitializeUI();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyUIWidget] LobbyManager is NULL!"));
 	}
 }
 
 void ULobbyUIWidget::InitializeUI()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] InitializeUI called"));
+	
 	if (!LobbyManager)
 	{
-		UE_LOG(LogTemp, Error, TEXT("LobbyManager is null!"));
+		UE_LOG(LogTemp, Error, TEXT("[LobbyUIWidget] InitializeUI failed - LobbyManager is null!"));
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] Calling RefreshCharacterList..."));
 	RefreshCharacterList();
+	
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] Calling RefreshDeckSlots..."));
 	RefreshDeckSlots();
 
-	UE_LOG(LogTemp, Log, TEXT("Lobby UI Initialized"));
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] Lobby UI Initialized Successfully!"));
 }
 
 void ULobbyUIWidget::RefreshCharacterList()
@@ -202,8 +214,8 @@ void ULobbyUIWidget::OnStartBattleClicked()
 
 	if (LobbyManager->IsFormationValid())
 	{
-		UE_LOG(LogTemp, Log, TEXT("Starting battle!"));
-		LobbyManager->StartBattle();
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyUIWidget] StartBattle button clicked - This is deprecated. Use BattleMenuWidget instead."));
+		// TODO: 이 버튼은 더 이상 사용하지 않음 (BattleMenuWidget에서 스테이지 선택 후 전투 시작)
 	}
 	else
 	{

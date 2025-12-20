@@ -4,6 +4,8 @@
 #include "SpawnManager.h"
 #include "BattleManager.h"
 #include "GameManager.h"
+#include "StageData.h"
+#include "LobbyManager.h"
 #include "Kismet/GameplayStatics.h"
 
 AStageManager::AStageManager()
@@ -75,6 +77,57 @@ void AStageManager::ChangeStageState(EStageState NewState)
 
 	UE_LOG(LogTemp, Log, TEXT("StageState Changed: %d -> %d"), static_cast<int32>(OldState), static_cast<int32>(NewState));
 }
+
+// ========== StageData 기반 초기화 (신규) ==========
+
+void AStageManager::InitializeWithStageData(UStageData* InStageData, const TArray<FBattleSlot>& InPlayerFormation)
+{
+	if (!InStageData)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[StageManager] StageData is NULL!"));
+		return;
+	}
+
+	StageData = InStageData;
+	PlayerFormation = InPlayerFormation;
+
+	StageName = StageData->StageName;
+	StageNumber = InStageData->StageLevel;
+
+	UE_LOG(LogTemp, Warning, TEXT("[StageManager] Initialized with StageData: %s"), *StageName);
+	UE_LOG(LogTemp, Log, TEXT("[StageManager] Enemy Count: %d, Player Formation: %d"), 
+		StageData->EnemyCount, PlayerFormation.Num());
+
+	// BattleManager 초기화
+	if (BattleManager)
+	{
+		if (!BattleManager->bIsInitialized)
+		{
+			BattleManager->Initialize();
+		}
+		BattleManager->OnBattleCompleted.AddDynamic(this, &AStageManager::HandleBattleCompleted);
+		UE_LOG(LogTemp, Log, TEXT("[StageManager] BattleManager initialized"));
+	}
+
+	// SpawnManager 초기화
+	if (SpawnManager)
+	{
+		SpawnManager->Initialize();
+		UE_LOG(LogTemp, Log, TEXT("[StageManager] SpawnManager initialized"));
+		
+		// TODO: 캐릭터 스폰 (Phase 2에서 구현)
+		// SpawnPlayerCharacters(PlayerFormation);
+		// SpawnEnemyCharacters(StageData);
+	}
+
+	// 스테이지 자동 시작
+	if (bAutoStartOnBeginPlay)
+	{
+		StartStage();
+	}
+}
+
+// ========== 기존 함수들 ==========
 
 void AStageManager::StartStage()
 {

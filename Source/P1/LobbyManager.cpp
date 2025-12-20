@@ -1,6 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LobbyManager.h"
+#include "StageData.h"
+#include "StageManager.h"
+#include "LobbyMainMenuWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 ALobbyManager::ALobbyManager()
 {
@@ -203,17 +207,82 @@ TArray<UCharacterData*> ALobbyManager::GetBattleReadyCharacters() const
 
 // ========== 전투 시작 ==========
 
-void ALobbyManager::StartBattle()
+void ALobbyManager::StartBattle(UStageData* Stage)
 {
-	if (!IsFormationValid())
+	if (!Stage)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Cannot start battle: Invalid formation"));
+		UE_LOG(LogTemp, Error, TEXT("[LobbyManager] Cannot start battle: Stage is NULL"));
 		return;
 	}
 
-	TArray<UCharacterData*> ReadyCharacters = GetBattleReadyCharacters();
-	UE_LOG(LogTemp, Log, TEXT("Starting battle with %d characters"), ReadyCharacters.Num());
+	if (!IsFormationValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyManager] Cannot start battle: Invalid formation"));
+		return;
+	}
 
-	// TODO: StageManager에게 전달
-	// StageManager->StartBattleWithFormation(ReadyCharacters);
+	CurrentSelectedStage = Stage;
+
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyManager] Starting battle: %s"), *Stage->StageName);
+	UE_LOG(LogTemp, Log, TEXT("[LobbyManager] Formation: %d characters ready"), GetBattleReadyCharacters().Num());
+
+	// StageManager 찾아서 초기화
+	AStageManager* StageManager = Cast<AStageManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AStageManager::StaticClass())
+	);
+	
+	if (StageManager)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[LobbyManager] Found StageManager, initializing..."));
+		StageManager->InitializeWithStageData(Stage, BattleFormation);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyManager] StageManager not found in level!"));
+		return;
+	}
+
+	// UI 숨기기
+	HideLobbyUI();
+
+	// TODO: 카메라 전환
+	// TODO: 입력 모드 변경 (UI → Game)
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+		PC->bShowMouseCursor = false;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyManager] Battle initialized successfully"));
+}
+
+void ALobbyManager::ShowLobbyUI()
+{
+	if (!MainMenuWidget && MainMenuWidgetClass)
+	{
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (PC)
+		{
+			MainMenuWidget = CreateWidget<ULobbyMainMenuWidget>(PC, MainMenuWidgetClass);
+		}
+	}
+
+	if (MainMenuWidget)
+	{
+		MainMenuWidget->SetLobbyManager(this);
+		MainMenuWidget->AddToViewport();
+
+		UE_LOG(LogTemp, Log, TEXT("[LobbyManager] Lobby UI shown"));
+	}
+}
+
+void ALobbyManager::HideLobbyUI()
+{
+	if (MainMenuWidget)
+	{
+		MainMenuWidget->RemoveFromParent();
+		UE_LOG(LogTemp, Log, TEXT("[LobbyManager] Lobby UI hidden"));
+	}
 }

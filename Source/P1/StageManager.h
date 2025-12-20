@@ -61,6 +61,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Managers")
 	ABattleManager* BattleManager;
 
+	// ========== 스테이지 초기화 (신규) ==========
+
+	// StageData 기반 초기화
+	UFUNCTION(BlueprintCallable, Category = "Stage")
+	void InitializeWithStageData(class UStageData* InStageData, const TArray<struct FBattleSlot>& PlayerFormation);
+
+	// 스테이지 데이터
+	UPROPERTY(BlueprintReadOnly, Category = "Stage")
+	TObjectPtr<class UStageData> StageData;
+
+	// 플레이어 편성
+	UPROPERTY(BlueprintReadOnly, Category = "Stage")
+	TArray<struct FBattleSlot> PlayerFormation;
+
+	// ========== 기존 함수들 ==========
+
 	// 스테이지 시작
 	UFUNCTION(BlueprintCallable, Category = "Stage")
 	void StartStage();
