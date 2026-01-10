@@ -1347,3 +1347,27 @@ LobbyMainMenuWidget 생성 및 표시
 - **네비게이션**: 카테고리 버튼 → WidgetSwitcher 인덱스 전환
 
 ---
+
+## 완료된 작업 (2026-01-10)
+
+### StageData 시스템 개선
+- [x] FStageDataTableRow에 MapPositionX, MapPositionY 필드 추가
+- [x] UStageData에 MapPosition (FVector2D) 필드 추가
+- [x] StageDataTable.csv 업데이트 (6개 스테이지, MapPosition 포함)
+- [x] StageData.cpp에서 MapPosition 자동 임포트 로직 구현
+- [x] P1Editor Win64 Development 빌드 완료
+- [x] StageDataTable.csv Reimport 성공
+
+**변경 사항:**
+- MapPositionX, MapPositionY → FVector2D MapPosition으로 통합
+- 월드맵 UI에서 스테이지 버튼 위치 지정 준비 완료
+- 6개 스테이지 데이터 정의 (Stage_1_1 ~ Stage_3_1)
+
+**다음 단계:**
+- [ ] WBP_StageButton Blueprint 생성 (UI 레이아웃)
+- [ ] WBP_BattleMenu Blueprint 생성 (월드맵 + 스테이지 선택)
+- [ ] WBP_LobbyMainMenu Slot 0에 WBP_BattleMenu 통합
+- [ ] StageData 애셋 생성 (DA_Stage_1_1 등)
+- [ ] 월드맵 배경 이미지 준비
+
+---

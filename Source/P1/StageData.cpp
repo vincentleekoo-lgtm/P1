@@ -38,12 +38,14 @@ void UStageData::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 				StageName = Row->StageName;
 				StageLevel = Row->StageLevel;
 				Description = FText::FromString(Row->Description);
-				EnemyCount = Row->EnemyCount;
+				MapPosition = FVector2D(Row->MapPositionX, Row->MapPositionY);
 				GoldReward = Row->GoldReward;
 				ExpReward = Row->ExpReward;
+				EnemyCount = Row->EnemyCount;
 				bIsUnlocked = Row->bIsUnlocked;
 
-				UE_LOG(LogTemp, Log, TEXT("StageData imported from DataTable: %s"), *StageName);
+				UE_LOG(LogTemp, Log, TEXT("StageData imported from DataTable: %s (MapPos: %.1f, %.1f)"), 
+					*StageName, MapPosition.X, MapPosition.Y);
 			}
 		}
 	}

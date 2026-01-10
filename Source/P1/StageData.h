@@ -25,10 +25,16 @@ struct FStageDataTableRow : public FTableRowBase
 	FString Description;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 EnemyCount;
+	float MapPositionX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MapPositionY;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 GoldReward;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 EnemyCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 ExpReward;
@@ -75,6 +81,9 @@ public:
 
 	// ========== 미니맵 표시 ==========
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Map")
+	FVector2D MapPosition;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Map")
 	TObjectPtr<UTexture2D> StageIcon;
 
